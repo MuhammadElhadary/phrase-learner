@@ -557,7 +557,7 @@ export async function renderSettings() {
     ),
     el('div', { class: 'card' },
       el('h3', {}, 'About'),
-      el('p', { class: 'muted small' }, 'Phrase Learner v0.2 · Browse → Learn → Revise · 8,196 phrases bundled')
+      el('p', { class: 'muted small' }, 'Phrase Learner v0.3 · Browse → Learn → Revise · 8,196 phrases bundled')
     )
   );
 }
