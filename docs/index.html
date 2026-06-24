@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f2937" />
+  <title>Phrase Learner</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <h1 id="app-title">📖 Phrase Learner</h1>
+      <div id="user-area"></div>
+    </header>
+
+    <nav id="bottom-nav">
+      <button data-view="dashboard" class="nav-btn active" title="Dashboard">📊</button>
+      <button data-view="revise" class="nav-btn" title="Review due phrases">🎯</button>
+      <button data-view="browse" class="nav-btn" title="Browse & learn">🔍</button>
+      <button data-view="progress" class="nav-btn" title="Progress stats">📈</button>
+      <button data-view="settings" class="nav-btn" title="Settings">⚙️</button>
+    </nav>
+
+    <main id="view"></main>
+
+    <div id="toast"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
