@@ -1,5 +1,5 @@
 // Phrase Learner service worker — offline-first cache
-const CACHE = 'phrase-learner-v2';
+const CACHE = 'phrase-learner-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,6 @@ const ASSETS = [
   './js/srs.js',
   './js/quiz.js',
   './js/views.js',
-  './assets/phrases.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
@@ -31,11 +30,18 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  // Network-first for Supabase API; cache-first for app shell
-  if (url.hostname.endsWith('supabase.co')) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // Network-first for Supabase API and GitHub raw CDN
+  if (url.hostname.endsWith('supabase.co') || url.hostname === 'raw.githubusercontent.com') {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
     return;
   }
+  // Cache-first for app shell
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request).then((res) => {
       if (res && res.status === 200 && e.request.method === 'GET') {
