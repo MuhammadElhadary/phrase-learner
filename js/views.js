@@ -1,7 +1,7 @@
 // views.js — Browse → Learn → Revise flow
 import { db, getDailyStats, bumpDailyStats, getProgress, setProgress } from './db.js';
 import { onCorrect, onWrong } from './srs.js';
-import { signIn, signUp, signOut, getCurrentUser, isLoggedIn, setSupabaseConfig, hasSupabaseConfig } from './auth.js';
+import { signIn, signUp, signOut, getCurrentUser, isLoggedIn } from './auth.js';
 import { syncNow, lastSync } from './sync.js';
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
@@ -43,43 +43,29 @@ function debounce(fn, ms) {
   let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
-// === AUTH (unchanged) ===
+// === AUTH (always shows sign-in — config is hardcoded) ===
 export function renderAuth() {
   const view = document.getElementById('view');
   view.innerHTML = '';
   const root = el('div', { id: 'auth-screen' });
-  root.append(el('h1', {}, '📖 Phrase Learner'));
-
-  if (!hasSupabaseConfig()) {
-    root.append(el('p', { class: 'muted small center' },
-      'One-time setup: paste your Supabase project URL and anon key to enable cloud sync. Skip and use offline mode.'));
-    const url = el('input', { type: 'url', placeholder: 'https://xxxxx.supabase.co' });
-    const key = el('input', { type: 'text', placeholder: 'anon public key' });
-    const save = el('button', { class: 'primary', onclick: () => {
-      setSupabaseConfig(url.value.trim(), key.value.trim());
-      toast('Supabase configured. Please sign in.');
-      renderAuth();
-    }}, 'Save & Continue');
-    const skip = el('button', { class: 'ghost', onclick: () => { window.app.goto('dashboard'); } }, 'Continue Offline →');
-    root.append(url, key, el('div', { class: 'row' }, save, skip));
-  } else {
-    const email = el('input', { type: 'email', placeholder: 'Email', autocomplete: 'email' });
-    const pass = el('input', { type: 'password', placeholder: 'Password', autocomplete: 'current-password' });
-    const signInBtn = el('button', { class: 'primary', onclick: async () => {
-      try { await signIn(email.value, pass.value); window.app.goto('dashboard'); }
-      catch (e) { toast('Sign-in failed: ' + e.message); }
-    }}, 'Sign In');
-    const signUpBtn = el('button', { onclick: async () => {
-      try { await signUp(email.value, pass.value); window.app.goto('dashboard'); }
-      catch (e) { toast('Sign-up failed: ' + e.message); }
-    }}, 'Sign Up');
-    const off = el('button', { class: 'ghost', onclick: () => window.app.goto('dashboard') }, 'Continue Offline');
-    root.append(
-      el('div', { id: 'auth-form' }, email, pass,
-        el('div', { class: 'row' }, signInBtn, signUpBtn),
-        el('div', { class: 'row center' }, off))
-    );
-  }
+  root.append(el('h1', {}, '📖 Phrase Learner'),
+    el('p', { class: 'muted small center' }, 'Sign in to sync progress across devices'));
+  const email = el('input', { type: 'email', placeholder: 'Email', autocomplete: 'email' });
+  const pass = el('input', { type: 'password', placeholder: 'Password', autocomplete: 'current-password' });
+  const signInBtn = el('button', { class: 'primary', onclick: async () => {
+    try { await signIn(email.value, pass.value); window.app.goto('dashboard'); }
+    catch (e) { toast('Sign-in failed: ' + e.message); }
+  }}, 'Sign In');
+  const signUpBtn = el('button', { onclick: async () => {
+    try { await signUp(email.value, pass.value); window.app.goto('dashboard'); }
+    catch (e) { toast('Sign-up failed: ' + e.message); }
+  }}, 'Sign Up');
+  const off = el('button', { class: 'ghost', onclick: () => window.app.goto('dashboard') }, 'Continue Offline');
+  root.append(
+    el('div', { id: 'auth-form' }, email, pass,
+      el('div', { class: 'row' }, signInBtn, signUpBtn),
+      el('div', { class: 'row center' }, off))
+  );
   view.append(root);
 }
 
@@ -148,11 +134,7 @@ export async function renderDashboard() {
 }
 
 function syncStatusText() {
-  if (!hasSupabaseConfig()) return 'Offline mode (no Supabase configured)';
-  const last = lastSync();
-  if (!last) return 'Not yet synced';
-  const ago = Math.round((Date.now() - new Date(last).getTime()) / 60000);
-  return ago < 1 ? 'Synced just now ✓' : `Last sync: ${ago} min ago`;
+  return 'Supabase sync enabled ✓';
 }
 
 // === REVISE (replaces study/quiz — simple recall review) ===
@@ -542,8 +524,7 @@ export async function renderSettings() {
     ),
     el('div', { class: 'card' },
       el('h3', {}, 'Supabase'),
-      el('p', { class: 'muted small' }, hasSupabaseConfig() ? 'Configured' : 'Not configured'),
-      el('button', { onclick: () => { localStorage.removeItem('sb_url'); localStorage.removeItem('sb_anon'); location.reload(); } }, 'Reset Supabase config')
+      el('p', { class: 'muted small' }, 'Hardcoded — cloud sync enabled')
     ),
     el('div', { class: 'card' },
       el('h3', {}, 'Data'),
