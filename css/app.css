@@ -1,0 +1,234 @@
+/* Phrase Learner — single stylesheet, dark theme, mobile-first */
+:root {
+  --bg: #1f2937;
+  --bg-2: #111827;
+  --card: #374151;
+  --card-2: #4b5563;
+  --text: #f3f4f6;
+  --text-dim: #9ca3af;
+  --accent: #10b981;
+  --accent-2: #059669;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --info: #3b82f6;
+  --border: #4b5563;
+  --radius: 12px;
+  --tap: 44px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+#app-title { font-size: 18px; margin: 0; }
+#user-area { font-size: 13px; color: var(--text-dim); display: flex; gap: 8px; align-items: center; }
+#user-area button { font-size: 12px; padding: 4px 10px; }
+
+#view {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: 80px;
+}
+
+#bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  z-index: 10;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 22px;
+  padding: 10px 0;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.nav-btn.active { color: var(--accent); }
+
+button {
+  font-family: inherit;
+  font-size: 15px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  min-height: var(--tap);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+button:active { transform: scale(0.98); }
+button.primary { background: var(--accent); color: #04221a; border-color: var(--accent-2); font-weight: 600; }
+button.primary:hover { background: var(--accent-2); }
+button.danger { background: var(--err); color: white; border-color: var(--err); }
+button.ghost { background: transparent; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 15px;
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  width: 100%;
+  min-height: var(--tap);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card h2, .card h3 { margin-top: 0; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row.between { justify-content: space-between; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.muted { color: var(--text-dim); }
+.small { font-size: 13px; }
+.center { text-align: center; }
+
+.progress-bar {
+  height: 10px;
+  background: var(--bg-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-bar > div {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #34d399);
+  transition: width 0.3s;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--card-2);
+  color: var(--text);
+  text-transform: uppercase;
+}
+.tag.A1 { background: #16a34a; }
+.tag.A2 { background: #0d9488; }
+.tag.B1 { background: #2563eb; }
+.tag.B2 { background: #7c3aed; }
+.tag.C1 { background: #c026d3; }
+.tag.C2 { background: #be185d; }
+.tag.known { background: var(--accent); color: #04221a; }
+.tag.learning { background: var(--info); }
+.tag.new { background: var(--card-2); }
+
+/* Quiz */
+#quiz-card { text-align: center; padding: 24px 16px; }
+#quiz-prompt { font-size: 22px; font-weight: 600; margin: 16px 0; }
+#quiz-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+#quiz-options button { text-align: left; }
+#quiz-options button.correct { background: var(--accent); color: #04221a; border-color: var(--accent-2); }
+#quiz-options button.wrong { background: var(--err); color: white; border-color: var(--err); }
+#quiz-feedback { margin-top: 16px; padding: 12px; background: var(--bg-2); border-radius: var(--radius); }
+#quiz-feedback.hidden { display: none; }
+.audio-btn { font-size: 32px; background: var(--card-2); border-radius: 50%; width: 64px; height: 64px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-2);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 100;
+  max-width: 90%;
+}
+#toast.show { opacity: 1; }
+
+/* Auth */
+#auth-screen { padding: 24px 16px; max-width: 400px; margin: 0 auto; }
+#auth-screen h1 { text-align: center; }
+#auth-form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+/* Browse list */
+.phrase-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+.phrase-row .text { font-weight: 600; }
+.phrase-row .meaning { color: var(--text-dim); font-size: 14px; }
+
+/* Streak calendar */
+.week-row { display: flex; gap: 4px; margin-bottom: 4px; }
+.day-cell {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--card-2);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.day-cell.studied { background: var(--accent); color: #04221a; }
+.day-cell.today { outline: 2px solid var(--info); }
+
+/* Sync indicator */
+#sync-status { font-size: 12px; color: var(--text-dim); }
+#sync-status.syncing { color: var(--warn); }
+#sync-status.error { color: var(--err); }
+
+/* Desktop tuning */
+@media (min-width: 600px) {
+  #view { padding: 24px; }
+  #quiz-prompt { font-size: 28px; }
+}
