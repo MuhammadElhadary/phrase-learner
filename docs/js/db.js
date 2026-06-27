@@ -15,8 +15,9 @@ export async function loadPhrases() {
   const seeded = await db.meta.get('seeded');
   if (seeded) return db.phrases.count();
 
-  const res = await fetch('./assets/phrases.json');
-  if (!res.ok) throw new Error('Failed to load phrases.json');
+  // Load from GitHub raw CDN (keeps deployment tiny; cached by SW after first load)
+  const res = await fetch('https://raw.githubusercontent.com/MuhammadElhadary/phrase-learner/main/assets/phrases.json');
+  if (!res.ok) throw new Error('Failed to load phrases.json (HTTP ' + res.status + ')');
   const data = await res.json();
 
   // Normalize: id field, strip fields we don't need, batch-insert
