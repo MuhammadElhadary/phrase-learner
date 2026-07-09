@@ -3,6 +3,7 @@ import { db, getDailyStats, bumpDailyStats, getProgress, setProgress } from './d
 import { onCorrect, onWrong } from './srs.js';
 import { signIn, signUp, signOut, getCurrentUser, isLoggedIn } from './auth.js';
 import { syncNow, lastSync } from './sync.js';
+import { speak as ttsSpeak, stop as ttsStop, isPlaying as ttsPlaying, setVoice } from './tts.js';
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const TOMORROW = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); };
@@ -30,13 +31,14 @@ export function toast(msg) {
   t._tm = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = 0.95;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+// === TTS button helper ===
+function ttsBtn(text, size = '16px') {
+  return el('button', {
+    class: 'tts-btn',
+    title: 'Listen',
+    style: `font-size:${size};padding:2px 6px;background:none;border:none;cursor:pointer;border-radius:4px`,
+    onclick: (e) => { e.stopPropagation(); ttsSpeak(text); }
+  }, '🔊');
 }
 
 function debounce(fn, ms) {
@@ -204,7 +206,7 @@ export async function renderRevise() {
       el('span', { class: 'muted small' }, `${s.idx + 1}/${s.items.length}`)
     ),
     el('div', { style: 'font-size:26px;font-weight:700;margin:24px 0' }, phrase.text),
-    el('button', { class: 'ghost small', onclick: () => speak(phrase.text) }, '🔊 Hear it')
+    el('button', { class: 'ghost small', onclick: () => ttsSpeak(phrase.text) }, '🔊 Hear it')
   );
 
   const actions = el('div', { style: 'display:flex;gap:12px;margin:20px 0;justify-content:center' });
@@ -235,8 +237,14 @@ export async function renderRevise() {
     feedback.append(
       el('div', { style: correct ? 'color:#10b981;font-weight:600' : 'color:#ef4444;font-weight:600' },
         correct ? '✅ Remembered! +3 points' : '❌ Let\'s review'),
-      el('div', { class: 'muted small', style: 'margin-top:8px' }, `"${ph.text}" = ${ph.meaning}`),
-      ph.example ? el('div', { class: 'muted small', style: 'margin-top:4px;font-style:italic' }, `• ${ph.example}`) : null
+      el('div', { class: 'row', style: 'margin-top:8px;gap:4px;align-items:flex-start' },
+        el('div', { class: 'muted small' }, `"${ph.text}" = ${ph.meaning}`),
+        ttsBtn(`"${ph.text}". ${ph.meaning}`, '13px')
+      ),
+      ph.example ? el('div', { class: 'row', style: 'margin-top:4px;gap:4px;align-items:flex-start' },
+        el('div', { class: 'muted small', style: 'font-style:italic' }, `• ${ph.example}`),
+        ttsBtn(ph.example, '13px')
+      ) : null
     );
     const nextBtn = el('button', { class: 'primary', style: 'margin-top:12px;width:100%' }, '▶ Next');
     nextBtn.onclick = () => { s.idx++; renderRevise(); };
@@ -335,8 +343,14 @@ function renderPhraseActionRow(p, state, prog) {
       el('span', { class: 'tag ' + p.level }, p.level),
       stateTag
     ),
-    el('div', { class: 'text', style: 'font-size:16px' }, p.text),
-    el('div', { class: 'meaning' }, p.meaning),
+    el('div', { class: 'row', style: 'gap:4px;align-items:center' },
+      el('span', { class: 'text', style: 'font-size:16px' }, p.text),
+      ttsBtn(p.text)
+    ),
+    el('div', { class: 'row', style: 'gap:4px;align-items:flex-start' },
+      el('span', { class: 'meaning' }, p.meaning),
+      ttsBtn(p.meaning, '14px')
+    ),
     btnRow
   );
 }
@@ -362,13 +376,13 @@ function renderLearnDetail(phrase) {
   // Audio button
   const audioBtn = el('button', {
     class: 'audio-btn',
-    onclick: () => speak(phrase.text),
+    onclick: () => ttsSpeak(phrase.text),
     style: 'font-size:28px;width:56px;height:56px;border-radius:50%;margin:8px auto'
   }, '🔊');
   card.append(audioBtn);
 
   // Auto-play on mount
-  setTimeout(() => speak(phrase.text), 300);
+  setTimeout(() => ttsSpeak(phrase.text), 300);
 
   // Level + Score
   card.append(
@@ -382,7 +396,10 @@ function renderLearnDetail(phrase) {
   card.append(
     el('div', { style: 'margin:20px 0;text-align:left' },
       el('div', { class: 'muted small', style: 'margin-bottom:4px' }, 'MEANING'),
-      el('div', { style: 'font-size:17px;font-weight:500' }, phrase.meaning)
+      el('div', { class: 'row', style: 'gap:4px;align-items:flex-start' },
+        el('div', { style: 'font-size:17px;font-weight:500' }, phrase.meaning),
+        ttsBtn(phrase.meaning, '14px')
+      )
     )
   );
 
@@ -391,17 +408,24 @@ function renderLearnDetail(phrase) {
     card.append(
       el('div', { style: 'margin:12px 0;text-align:left' },
         el('div', { class: 'muted small', style: 'margin-bottom:4px' }, 'EXAMPLE'),
-        el('div', { style: 'font-style:italic;color:#d1d5db' }, `"${phrase.example}"`)
+        el('div', { class: 'row', style: 'gap:4px;align-items:flex-start' },
+          el('div', { style: 'font-style:italic;color:#d1d5db;flex:1' }, `"${phrase.example}"`),
+          ttsBtn(phrase.example, '14px')
+        )
       )
     );
   }
 
   // Variants
   if (phrase.otherForms) {
+    const variantsText = phrase.otherForms.split(',').join(' · ');
     card.append(
       el('div', { style: 'margin:12px 0;text-align:left' },
         el('div', { class: 'muted small', style: 'margin-bottom:4px' }, 'ALSO SAID AS'),
-        el('div', {}, phrase.otherForms.split(',').join(' · '))
+        el('div', { class: 'row', style: 'gap:4px;align-items:flex-start' },
+          el('div', { style: 'flex:1' }, variantsText),
+          ttsBtn(variantsText, '14px')
+        )
       )
     );
   }
