@@ -30,7 +30,8 @@ window.app = app;
 // === Boot ===
 async function boot() {
   // 1. Show something immediately so UI feels responsive
-  document.getElementById('view').innerHTML = '<div class="card center muted">Loading phrases…</div>';
+  const viewEl = document.getElementById('view');
+  viewEl.innerHTML = '<div class="card center muted">Loading phrases…</div>';
 
   // 2. Seed phrases (5MB, runs once — subsequent loads are instant)
   try {
@@ -38,28 +39,30 @@ async function boot() {
     console.log(`[boot] phrases ready: ${n}`);
   } catch (e) {
     console.error('[boot] seed failed', e);
-    document.getElementById('view').innerHTML =
+    viewEl.innerHTML =
       `<div class="card">Failed to load phrase data: ${e.message}</div>`;
     return;
   }
 
-  // 3. Restore auth state (if Supabase configured)
-  try { await getCurrentUser(); } catch (_) {}
+  // 3. Restore auth state (non-blocking — fails fast if Supabase unreachable)
+  //    The 8s timeout and error->null logic is inside getCurrentUser()
+  try { await getCurrentUser(); } catch (_) { }
 
-  // 4. Nav bindings
+  // 3b. Nav bindings (must happen before goto so buttons are wired)
   document.querySelectorAll('.nav-btn').forEach((b) => {
     b.addEventListener('click', () => app.goto(b.dataset.view));
   });
 
-  // 5. Initial route: settings if no Supabase, else dashboard
+  // 4. Show user area without blocking the boot
   const userArea = document.getElementById('user-area');
   if (isLoggedIn()) {
-    const u = await getCurrentUser();
-    userArea.innerHTML = `<span>${u.email}</span><button onclick="window.app.goto('settings')">⚙️</button>`;
+    const u = await getCurrentUser(); // fast now since _user is cached
+    userArea.innerHTML = `<span>${u?.email || ''}</span><button onclick="window.app.goto('settings')">⚙️</button>`;
   } else {
     userArea.innerHTML = `<button onclick="window.app.goto('auth')">Sign in</button>`;
   }
 
+  // 5. Show dashboard immediately — don't wait for auth/sync
   app.goto('dashboard');
 
   // 6. Background sync (best-effort, doesn't block UI)

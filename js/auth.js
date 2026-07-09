@@ -25,8 +25,19 @@ export async function getCurrentUser() {
   if (_user) return _user;
   const c = getClient();
   if (!c) return null;
-  const { data } = await c.auth.getUser();
-  _user = data.user || null;
+  try {
+    // Timeout after 8s — if Supabase is unreachable (VPN, etc.), fail fast
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const { data } = await c.auth.getUser();
+    clearTimeout(timer);
+    _user = data.user || null;
+  } catch (e) {
+    // Network failure (VPN blocking supabase.co) — clear stale session so app doesn't hang
+    console.warn('[auth] getUser failed, clearing session:', e);
+    _user = null;
+    try { await c.auth.signOut(); } catch (_) {}
+  }
   return _user;
 }
 
