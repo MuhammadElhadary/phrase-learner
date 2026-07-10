@@ -340,7 +340,25 @@ function renderPhraseActionRow(p, state, prog) {
   const btnRow = el('div', { class: 'row', style: 'margin-top:6px;gap:6px' });
 
   if (state === 'known') {
-    btnRow.append(el('span', { class: 'muted small' }, '✅ Mastered'));
+    btnRow.append(
+      el('span', { class: 'muted small' }, '✅ Mastered'),
+      el('button', {
+        class: 'ghost',
+        style: 'font-size:12px;padding:4px 8px;white-space:nowrap;color:var(--warn)',
+        onclick: async () => {
+          const pr = prog;
+          pr.learnStateInt = 1;
+          pr.rememberCount = 0;
+          pr.nextReview = TOMORROW();
+          pr.masteryScore = 60;
+          pr.updated_at = new Date().toISOString();
+          await setProgress(pr);
+          await db.phrases.update(p.wordId, { learnStateInt: 1 });
+          toast(`🔄 "${p.text}" moved back to learning`);
+          renderBrowse();
+        }
+      }, '↩ Relearn')
+    );
   } else {
     btnRow.append(knowBtn, learnBtn);
   }
