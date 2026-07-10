@@ -257,20 +257,27 @@ export async function renderRevise() {
 }
 
 // === BROWSE (search + I Know / Learn buttons) ===
+let _browseQuery = '';
+let _browseLevel = '';
+
 export async function renderBrowse() {
   const view = document.getElementById('view');
   view.innerHTML = '';
-  const search = el('input', { type: 'search', placeholder: 'Search phrases by text or meaning…' });
+  const search = el('input', { type: 'search', placeholder: 'Search phrases by text or meaning…', value: _browseQuery });
   const levelFilter = el('select', {},
     el('option', { value: '' }, 'All levels'),
-    ...['A1', 'A2', 'B1', 'B2'].map((l) => el('option', { value: l }, l))
+    ...['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((l) => el('option', { value: l }, l))
   );
+  levelFilter.value = _browseLevel;
   const list = el('div', { id: 'browse-list' });
 
   async function refresh() {
     list.innerHTML = '';
     const q = (search.value || '').toLowerCase().trim();
     const lv = levelFilter.value;
+    // Persist so re-entering browse keeps the same filter
+    _browseQuery = search.value;
+    _browseLevel = levelFilter.value;
     let items = await db.phrases.toArray();
     if (lv) items = items.filter((x) => x.level === lv);
     if (q) items = items.filter((x) =>
