@@ -3,7 +3,7 @@ import { db, getDailyStats, bumpDailyStats, getProgress, setProgress } from './d
 import { onCorrect, onWrong } from './srs.js';
 import { signIn, signUp, signOut, getCurrentUser, isLoggedIn } from './auth.js';
 import { syncNow, lastSync } from './sync.js';
-import { speak as ttsSpeak, stop as ttsStop, isPlaying as ttsPlaying, setVoice } from './tts.js';
+import { speak as ttsSpeak, stop as ttsStop, isPlaying as ttsPlaying, getConfig, saveConfig } from './tts.js';
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const TOMORROW = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); };
@@ -535,11 +535,13 @@ export async function renderProgress() {
   );
 }
 
-// === SETTINGS (unchanged) ===
+// === SETTINGS ===
 export async function renderSettings() {
   const view = document.getElementById('view');
   view.innerHTML = '';
   const user = await getCurrentUser();
+  const ttsCfg = getConfig();
+
   view.append(
     el('div', { class: 'card' },
       el('h3', {}, 'Account'),
@@ -556,6 +558,51 @@ export async function renderSettings() {
     el('div', { class: 'card' },
       el('h3', {}, 'Supabase'),
       el('p', { class: 'muted small' }, 'Hardcoded — cloud sync enabled')
+    ),
+    el('div', { class: 'card' },
+      el('h3', {}, 'Text-to-Speech'),
+      el('div', { class: 'col', style: 'gap:10px' },
+        // Provider mode selector
+        el('label', { class: 'muted small' }, 'Provider mode'),
+        (() => {
+          const sel = el('select', { style: 'width:100%' },
+            el('option', { value: 'fallback' }, 'Cartesia → Speechify (fallback)'),
+            el('option', { value: 'cartesia' }, 'Cartesia only'),
+            el('option', { value: 'speechify' }, 'Speechify only')
+          );
+          sel.value = ttsCfg.mode;
+          return sel;
+        })(),
+        // Cartesia key
+        el('label', { class: 'muted small' }, 'Cartesia API key'),
+        (() => {
+          const inp = el('input', { type: 'password', placeholder: 'sk_car_...', value: ttsCfg.cartesiaKey || '' });
+          return inp;
+        })(),
+        // Speechify key
+        el('label', { class: 'muted small' }, 'Speechify API key'),
+        (() => {
+          const inp = el('input', { type: 'password', placeholder: 'sk_...', value: ttsCfg.speechifyKey || '' });
+          return inp;
+        })(),
+        // Save button
+        el('button', { class: 'primary', style: 'width:100%;margin-top:4px', onclick: () => {
+          // Gather values
+          const card = view.querySelector('.card:nth-child(3)');
+          const inputs = card.querySelectorAll('input[type=password]');
+          const select = card.querySelector('select');
+          const newCfg = {
+            mode: select.value,
+            cartesiaKey: inputs[0].value || '',
+            cartesiaVoice: ttsCfg.cartesiaVoice,
+            speechifyKey: inputs[1].value || '',
+            speechifyVoice: ttsCfg.speechifyVoice
+          };
+          saveConfig(newCfg);
+          // Clear cache so next TTS uses new keys
+          toast('TTS settings saved');
+        } }, 'Save TTS settings')
+      )
     ),
     el('div', { class: 'card' },
       el('h3', {}, 'Data'),
